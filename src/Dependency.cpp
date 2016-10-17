@@ -194,7 +194,7 @@ std::string Dependency::getInnerPath()
 }
 
 
-void Dependency::addSymlink(std::string s){ symlinks.push_back(stripPrefix(s)); }
+void Dependency::addSymlink(std::string s){ symlinks.push_back(s); }
 
 // comapres the given Dependency with this one. If both refer to the same file,
 // it returns true and merges both entries into one.
@@ -202,6 +202,11 @@ bool Dependency::mergeIfSameAs(Dependency& dep2)
 {
     if(dep2.getOriginalFileName().compare(filename) == 0)
     {
+        if(dep2.getOriginalPath() != getOriginalPath())
+        {
+            dep2.addSymlink(getOriginalPath());
+        }
+
         const int samount = dep2.getSymlinkAmount();
         for(int n=0; n<samount; n++)
             addSymlink( dep2.getSymlink(n) ); // FIXME - there may be duplicate symlinks
@@ -240,7 +245,7 @@ void Dependency::fixFileThatDependsOnMe(std::string file_to_fix)
     for(int n=0; n<symamount; n++)
     {
         std::string command = std::string("install_name_tool -change ") +
-        prefix+symlinks[n] + " " + getInnerPath() + " " + file_to_fix;
+        symlinks[n] + " " + getInnerPath() + " " + file_to_fix;
         
         if( systemp( command ) != 0 )
         {
